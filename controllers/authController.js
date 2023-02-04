@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const Users = require('../models/userModel');
 const AppError = require('../utils/error')
@@ -14,7 +15,8 @@ const signup = async (req, res, next) => {
             name: req.body.name,
             email: req.body.email,
             password: req.body.password,
-            confirmPassword: req.body.confirmPassword
+            confirmPassword: req.body.confirmPassword,
+            passwordChangedAt: req.body.passwordChangedAt
         }
         const user = new Users(userBody);
         const createUser = await user.save();
@@ -72,4 +74,44 @@ const login = async (req, res, next) => {
     }
 }
 
-module.exports = { signup, login }
+const protect = async (req, res, next) => {
+    try {
+        let token;
+        // 1. Getting token and check if its there
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+
+        if (!token) {
+            return next(new AppError(`Unauthorized access denied`, 401));
+        }
+
+        // 2. Verification of token
+        const decodedPayload = await promisify(jwt.verify)(token, process.env.JWT_SECRET_KEY);
+        console.log(decodedPayload);
+
+        // 3. Check if user still exists
+        // i.e if the user has been deleted or the user has changed its password before the JWT token expires, in that case then it will still be authorized. To avoid this we make sure to check this step.
+        const userExists = await Users.findById(decodedPayload.id);
+        if (!userExists) {
+            return next(new AppError('The user belonging to the token does not exists.', 404));
+        }
+
+        // 4. Check if user has changed password after the JWT token was issued.
+        if (userExists.changedPasswordAfter(decodedPayload.iat)) {
+            return next(new AppError('User recently changed the password. Please log in again', 401))
+        }
+
+        // only if all the checks are done, then only the next middleware in the stack will be called.
+        req.user = userExists;
+        next();
+    } catch (error) {
+        res.status(401).json({
+            status: 'Fail',
+            message: error.message,
+            error: error
+        })
+    }
+}
+
+module.exports = { signup, login, protect }

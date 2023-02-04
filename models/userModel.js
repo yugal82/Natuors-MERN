@@ -35,6 +35,9 @@ const userSchema = mongoose.Schema({
             message: 'Password and Confirm Password are not matching.'
         },
         select: false
+    },
+    passwordChangedAt: {
+        type: Date,
     }
 });
 
@@ -50,12 +53,23 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
-userSchema.methods.correctPassword = async function (
-    candidatePassword,
-    userPassword
-) {
+userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
     return await bcrypt.compare(candidatePassword, userPassword);
 };
+
+userSchema.methods.changedPasswordAfter = function (JWTTimeStamp) {
+    if (this.passwordChangedAt) {
+        const changedTimestamp = (this.passwordChangedAt.getTime() / 1000);
+        
+        return JWTTimeStamp < changedTimestamp;
+        // we check the above statement - if the issue time of token is 100 and changedPassword time is 200 i.e we change the password after the token is being issued, then it will return true.
+        // else of the issue of token is after the password is changed then it will return false.
+        // the second scenario can occuer where suppose in one session user logs in and changes the password. And logs out of the application. And again logs in later, and due to this a new Jwt token will be assigned to that user and by which we can say that the timestamp of passwordChanged is later than the issue of token
+    }
+
+    //false means password is not changed.
+    return false;
+}
 
 const Users = mongoose.model('users', userSchema);
 
