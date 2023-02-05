@@ -16,7 +16,8 @@ const signup = async (req, res, next) => {
             email: req.body.email,
             password: req.body.password,
             confirmPassword: req.body.confirmPassword,
-            passwordChangedAt: req.body.passwordChangedAt
+            passwordChangedAt: req.body.passwordChangedAt,
+            role: req.body.role
         }
         const user = new Users(userBody);
         const createUser = await user.save();
@@ -74,6 +75,7 @@ const login = async (req, res, next) => {
     }
 }
 
+// this function is to check whether the user is logged in or not to perform certain operations.
 const protect = async (req, res, next) => {
     try {
         let token;
@@ -88,7 +90,6 @@ const protect = async (req, res, next) => {
 
         // 2. Verification of token
         const decodedPayload = await promisify(jwt.verify)(token, process.env.JWT_SECRET_KEY);
-        console.log(decodedPayload);
 
         // 3. Check if user still exists
         // i.e if the user has been deleted or the user has changed its password before the JWT token expires, in that case then it will still be authorized. To avoid this we make sure to check this step.
@@ -114,4 +115,25 @@ const protect = async (req, res, next) => {
     }
 }
 
-module.exports = { signup, login, protect }
+const restrictTo = (...roles) => {
+    return (req, res, next) => {
+        try {
+            // the below if condition is to check if the role of the user is admin or lead-guide to perform the operation.
+            // The roles array is the parameters passed from the tours.js routes file which specifies which roles are allowed to perform the operation.
+            // For now the roles array is -> roles = ['admin', 'lead-guide'] and default value of role='user', so the roles.includes('user') check whether the roles arrays includes 'user' in it, if it includes return true else return false.
+            if (!roles.includes(req.user.role)) {
+                return next(new AppError('You do not have the permission to perform this operation', 403));
+            }
+
+            next();
+        } catch (error) {
+            res.status(401).json({
+                status: 'Fail',
+                message: error.message,
+                error: error
+            })
+        }
+    }
+}
+
+module.exports = { signup, login, protect, restrictTo }
