@@ -11,6 +11,19 @@ const createToken = (id) => {
     })
 }
 
+const createAndSendToken = (user, statusCode, message, res) => {
+    const token = createToken(user._id);
+
+    res.status(statusCode).json({
+        status: 'Success',
+        message: message,
+        token: token,
+        data: {
+            user
+        }
+    })
+}
+
 const signup = async (req, res, next) => {
     try {
         const userBody = {
@@ -27,16 +40,7 @@ const signup = async (req, res, next) => {
         // JWT -JsonWebToken is used for authentication and authorization of a user.
         // jwt.sign() creates a new token and assigns it to a user which has been created newly. Using this jwt token, the server verifies whether the user is authentic and authorized or not.
         // jwt.sign() takes in 2 compulsory parameter which are payload i.e the data which is to be stored in the jwt token and the second parameter is the secret key to help generate a jwt token.
-        const token = createToken(createUser._id);
-
-        res.status(201).json({
-            status: 'Success',
-            message: 'User created successfully.',
-            token: token,
-            data: {
-                user: createUser
-            }
-        })
+        createAndSendToken(createUser, 201, 'User created successfully.', res);
     } catch (error) {
         res.status(400).json({
             status: 'Fail',
@@ -63,11 +67,7 @@ const login = async (req, res, next) => {
         }
 
         // 3. If everything okay, then send the JWT token back to the user.
-        const token = createToken(user._id);
-        res.status(200).json({
-            status: 'Success',
-            token,
-        })
+        createAndSendToken(user, 200, '', res);
     } catch (error) {
         res.status(401).json({
             status: 'Fail',
@@ -194,13 +194,9 @@ const resetPassword = async (req, res, next) => {
 
         // 3. Update changedPasswordAt field in database
         // this is step is done is models since it is close to data and we maintain the fat models, thin controllers concept
-        
+
         // 4. Log the user in, send JWT token
-        const token = createToken(user._id);
-        res.status(200).json({
-            status: 'Success',
-            token: token,
-        })
+        createAndSendToken(user, 200, '', res);
 
     } catch (error) {
         res.status(401).json({
@@ -211,4 +207,32 @@ const resetPassword = async (req, res, next) => {
     }
 }
 
-module.exports = { signup, login, protect, restrictTo, forgotPassword, resetPassword }
+const updatePassword = async (req, res, next) => {
+    try {
+        // 1. Get user from database
+        const user = await Users.findById(req.user._id).select('+password');
+
+        // 2. Check if password sent through the request matches the password in database
+        if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+            return next(new AppError('Your current password is not matching.', 401))
+        }
+
+        // 3. If password matches, update password
+        user.password = req.body.password;
+        user.confirmPassword = req.body.confirmPassword;
+        await user.save();
+
+        // 4. Log user in and send JWT token
+        createAndSendToken(user, 200, 'Password has been changed', res);
+    } catch (error) {
+        res.status(401).json({
+            status: 'Fail',
+            message: error.message,
+            error: error
+        })
+    }
+}
+
+
+
+module.exports = { signup, login, protect, restrictTo, forgotPassword, resetPassword, updatePassword }
