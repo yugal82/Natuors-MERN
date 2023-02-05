@@ -42,11 +42,14 @@ const userSchema = mongoose.Schema({
         },
         select: false
     },
-    passwordChangedAt: {
-        type: Date,
-    },
+    passwordChangedAt: Date,
     passwordResetToken: String,
-    passwordResetExpires: Date
+    passwordResetExpires: Date,
+    active: {
+        type: Boolean,
+        default: true,
+        select: false
+    }
 });
 
 // this middleware is to hash the password using bcryptjs package
@@ -61,12 +64,19 @@ userSchema.pre('save', async function (next) {
     next();
 });
 
-userSchema.pre('save', function(next){
-    if(!this.isModified('password') || this.isNew) return next();
+userSchema.pre('save', function (next) {
+    if (!this.isModified('password') || this.isNew) return next();
 
     this.passwordChangedAt = Date.now() - 1000;
     next();
-})
+});
+
+userSchema.pre(/^find/, function (next) {
+    // this points to the current query and not the document
+    this.find({ active: { $ne: false } });
+
+    next();
+});
 
 userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
     return await bcrypt.compare(candidatePassword, userPassword);
