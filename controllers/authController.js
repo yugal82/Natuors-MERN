@@ -193,7 +193,8 @@ const resetPassword = async (req, res, next) => {
         await user.save();
 
         // 3. Update changedPasswordAt field in database
-
+        // this is step is done is models since it is close to data and we maintain the fat models, thin controllers concept
+        
         // 4. Log the user in, send JWT token
         const token = createToken(user._id);
         res.status(200).json({
