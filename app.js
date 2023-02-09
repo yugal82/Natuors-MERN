@@ -1,6 +1,11 @@
 const dotenv = require('dotenv');
 dotenv.config({path : './config.env'});
 
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+
 const express = require('express');
 const app = express();
 
@@ -14,9 +19,30 @@ app.get('/', (req, res) => {
 })
 
 // 1) Middlewares
+// Set security HTTP headers.
+app.use(helmet());
+
+// Middleware to set the rate of the API call
+const limiter = rateLimit({
+    max: 100,
+    windowMs: 60*60*1000,
+    message: 'Too many request from this IP, try again after an hour.'
+});
+app.use('/api', limiter)
+
+// Body parser, reading data from the body into req.body
 app.use(express.json());
+
+// Data sanitization against NoSQL Injection. (NoSQL Injection is a type of an attack).
+app.use(mongoSanitize());
+
+// Data sanitization against XSS attacks
+app.use(xss());
+
+// serving static files
 app.use(express.static(`${__dirname}/public`));
 
+// Test middleware
 app.use((req, res, next) => {
     req.requestTime = new Date().toISOString();
     // console.log(req.requestTime)
