@@ -13,6 +13,7 @@ const AppError = require('./utils/error');
 const errorHandler = require('./controllers/errorController');
 const tourRoutes = require('./routes/tours');
 const usersRoutes = require('./routes/users');
+const reviewRoutes = require('./routes/review');
 
 app.get('/', (req, res) => {
     res.send('The natours server is live!');
@@ -54,6 +55,7 @@ app.use((req, res, next) => {
 // 2) Routes
 app.use(tourRoutes);
 app.use(usersRoutes);
+app.use(reviewRoutes);
 
 // handling requests to routes that are not defined
 app.all('*', (req, res, next) => {
