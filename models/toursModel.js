@@ -78,9 +78,13 @@ const tours = mongoose.Schema({
     guides: [
         { 
             type: mongoose.Schema.ObjectId,
-            ref: 'User'
+            ref: 'users'
         }
     ]
+},
+{
+    toJSON: { virtual: true },
+    toObject: { virtual: true }
 });
 
 //Document middleware i.e middleware in mongoose:
@@ -108,6 +112,17 @@ const tours = mongoose.Schema({
 //     this.guides = await Promise.all(guidesPromises);
 //     next();
 // })
+
+// this is a query middleware, which is used to populate the referenced documents in the tours collection.
+// i.e since we are referencing the users documents in guides field in the tours schema, we need to poulate it when quering i.e find(), findById(), findOne(), etc. 
+tours.pre(/^find/, async function(next) {
+    this.populate({ 
+        path: 'guides', 
+        select: '-__v -passwordChangedAt' 
+    });
+    
+    next();
+})
 
 // to make a model out of the above defined schema we use .model() method to create a collection in the database.
 // the first argument is the name of the collection and the second argument is the schema against which we want to create a collection.

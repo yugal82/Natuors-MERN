@@ -46,7 +46,17 @@ const getTourByID = async (req, res, next) => {
     try {
         const tour = await Tours.findById(req.params.id);
 
-        if(!tour){
+        // this commented code is related to the concept of referencing between 2 schemas. This is a 2 step process.
+        // 1. Create a reference to the other schema. (in this case we created the reference in toursModel w.r.t userModel schema)
+        // 2. The second step is to populate the documents of user(i.e users wtih role guides or admins) to the tours models and this is accomplished by using the populate() method.
+        // const tour = await Tours.findById(req.params.id).populate({ 
+        //     path: 'guides', 
+        //     select: '-__v -passwordChangedAt' 
+        // });
+
+        // since we have to write the same code for getTourById and getTours again and again, its optimal to write the populate() method in a query middleware in the models folder itself. And hence we migrate this peice of code in models and write it as a query middleware.
+
+        if (!tour) {
             return next(new AppError(`No tours available for ${req.params.id} id`, 404));
         }
 
@@ -84,7 +94,7 @@ const updateTourByID = async (req, res, next) => {
             new: true,
             runValidator: true
         });
-        if(!tour){
+        if (!tour) {
             return next(`Cannot update tour. Invalid ID`, 404);
         }
         res.status(200).json({
@@ -102,8 +112,8 @@ const updateTourByID = async (req, res, next) => {
 const deleteTourByID = async (req, res, next) => {
     try {
         const tour = await Tours.findByIdAndDelete(req.params.id);
-        
-        if(!tour){
+
+        if (!tour) {
             return next(`Cannot delete tour. Invalid ID`, 404);
         }
 
