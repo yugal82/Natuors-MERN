@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 // const Users = require('./userModel');
+const Reviews = require('./reviewModel');
 
 // to make a schema for a model in mongodb, mongoose provides us with mongoose.Schema() method which takes in a object to define a schema.
 const tours = mongoose.Schema({
@@ -83,9 +84,16 @@ const tours = mongoose.Schema({
     ]
 },
 {
-    toJSON: { virtual: true },
-    toObject: { virtual: true }
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
+
+// virtual populate
+tours.virtual('reviews', {
+    ref: 'reviews',
+    foreignField: 'tour',
+    localField: '_id'
+})
 
 //Document middleware i.e middleware in mongoose:
 // .pre() -> this runs BEFORE .save() or .create()
