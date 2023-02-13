@@ -44,7 +44,7 @@ const getAllTours = async (req, res) => {
 
 const getTourByID = async (req, res, next) => {
     try {
-        const tour = await Tours.findById(req.params.id);
+        const tour = await Tours.findById(req.params.id).populate('reviews');
 
         // this commented code is related to the concept of referencing between 2 schemas. This is a 2 step process.
         // 1. Create a reference to the other schema. (in this case we created the reference in toursModel w.r.t userModel schema)
