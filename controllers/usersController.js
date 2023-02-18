@@ -1,8 +1,5 @@
-const fs = require('fs');
 const Users = require('../models/userModel');
 const AppError = require('../utils/error');
-
-const users = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/users.json`, 'utf-8'));
 
 const getUsers = async (req, res, next) => {
     try {
@@ -22,15 +19,32 @@ const getUsers = async (req, res, next) => {
     }
 }
 
-const postUser = (req, res) => {
-    const user = Object.assign(req.body);
-    users.push(user);
+const getUser = async(req, res, next) => {
+    try {
+        const user = await Users.findById(req.params.id);
+        if(!user){
+            next(new AppError('No user found. Please put in the correct ID', 404));
+        }
 
-    fs.writeFile(`${__dirname}/dev-data/data/users.json`, JSON.stringify(users), (err) => {
-        res.status(201).json({
-            status: 'success',
-            user: user,
-        });
+        res.status(200).json({
+            status: 'Success',
+            data: {
+                user
+            }
+        })
+    } catch (error) {
+        res.status(400).json({
+            status: 'Fail',
+            message: error.message,
+            error: error
+        })
+    }
+}
+
+const postUser = (req, res) => {
+    res.status(500).json({
+        status: 'Fail',
+        message: 'This route is not for signup. Please use /signup instead.'
     });
 }
 
@@ -84,4 +98,17 @@ const deleteMe = async (req, res, next) => {
     }
 }
 
-module.exports = { getUsers, postUser, updateMe, deleteMe };
+const getMe = (req, res, next) => {
+    try {
+        req.params.id = req.user.id;
+        next();
+    } catch (error) {
+        res.status(400).json({
+            status: 'Fail',
+            message: error.message,
+            error: error
+        })
+    }
+}
+
+module.exports = { getUsers, postUser, updateMe, deleteMe, getMe, getUser };

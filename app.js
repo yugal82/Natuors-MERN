@@ -55,7 +55,7 @@ app.use((req, res, next) => {
 // 2) Routes
 app.use(tourRoutes);
 app.use(usersRoutes);
-app.use(reviewRoutes);
+app.use('/api/v1/reviews',reviewRoutes);
 
 // handling requests to routes that are not defined
 app.all('*', (req, res, next) => {
