@@ -24,6 +24,29 @@ const getAllReviews = async (req, res, next) => {
     }
 }
 
+const getReview = async(req, res, next) => {
+    try {
+        const review = await Reviews.findById(req.params.id);
+
+        if(!review){
+            next(new AppError('No review found with the specified ID', 404));
+        }
+
+        res.status(200).json({
+            status: 'Success',
+            data: {
+                review
+            }
+        })
+    } catch (error) {
+        res.status(400).json({
+            status: 'Failed',
+            message: error.message,
+            error: error
+        })
+    }
+}
+
 const postReview = async (req, res, next) => {
     try {
         if (!req.body.tour) req.body.tour = req.params.tourId;
@@ -91,4 +114,4 @@ const updateReview = async(req, res, next) => {
     }
 }
 
-module.exports = { getAllReviews, postReview, deleteReview, updateReview }
+module.exports = { getAllReviews, postReview, deleteReview, updateReview, getReview }
