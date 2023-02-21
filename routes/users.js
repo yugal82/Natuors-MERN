@@ -8,9 +8,10 @@ const router = express.Router();
 // route - 'localhost:8000/signup works perfectly fine to post(create) users. Although 'api/v1/users/signup' does not works. Check and debug.
 router.post('/signup', signup);
 router.post('/login', login);
-
 router.post('/forgot-password', forgotPassword);
 router.patch('/reset-password/:token', resetPassword);
+
+// from here every route will require authentication, so we use protect() middleware in every route (except for getUsers and getUser). PS - postUser middleware does not do anything. Signup route is used to create user.
 router.patch('/update-password', protect, updatePassword);
 
 router.get('/api/v1/users/my-profile', protect, getMe, getUser);
