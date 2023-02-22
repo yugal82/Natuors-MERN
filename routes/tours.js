@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const { getAllTours, getTourByID, postTours, updateTourByID, deleteTourByID, getTourStats } = require('../controllers/toursController');
+const { getAllTours, getTourByID, postTours, updateTourByID, deleteTourByID, getTourStats, getTourWithin, getDistances } = require('../controllers/toursController');
 const { protect, restrictTo } = require('../controllers/authController');
 const reviewRoutes = require('./review');
 
 router.use('/api/v1/tours/:tourId/reviews', reviewRoutes);
+
+router.get('/api/v1/tours/tours-within/:dist/center/:latlng/unit/:unit', getTourWithin);
+router.get('/api/v1/tours/get-distance/:latlng/unit/:unit', getDistances);
 
 router.get('/api/v1/tours', protect, getAllTours);
 router.get('/api/v1/tours/tour-stats', getTourStats);

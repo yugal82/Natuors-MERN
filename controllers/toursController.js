@@ -160,4 +160,79 @@ const getTourStats = async (req, res) => {
     }
 }
 
-module.exports = { getAllTours, getTourByID, postTours, updateTourByID, deleteTourByID, getTourStats };
+const getTourWithin = async (req, res, next) => {
+    try {
+        const { dist, latlng, unit } = req.params;
+        const [lat, lng] = latlng.split(',');
+
+        const radius = unit == "mi" ? dist / 3963.2 : dist / 6378.1;
+
+        if (!lat || !lng) {
+            next(new AppError('Please specify the latitude and longitude in the format lat,lng', 400));
+        }
+
+        // here when querying the find method to find the tours that are within a certain radius, we pass in the query parameter in the find() method as a geo spatial query parameter. Mongoose supports geospatial queries and are defined as $geoWithin to search for tours which are within a specific radius.
+        // the radius variable that is passed in the query parameter is to search for documents within a 'radius' which is in radians and therefore we convert the dist params to radians by multiplying it with the radius of the earth.
+        const tours = await Tours.find({ startLocation: { $geoWithin: { $centerSphere: [[lng, lat], radius] } } })
+
+        res.status(200).json({
+            status: 'success',
+            results: tours.length,
+            data: {
+                tours
+            }
+        })
+    } catch (error) {
+        res.status(400).json({
+            status: 'fail',
+            message: error.message,
+        })
+    }
+}
+
+const getDistances = async (req, res, next) => {
+    try {
+        const { latlng, unit } = req.params;
+        const [lat, lng] = latlng.split(',');
+
+        const multiplier = unit == 'mi' ? 0.000621371 : 0.001;
+
+        if (!lat || !lng) {
+            next(new AppError('Please specify the latitude and longitude in the format lat,lng', 400));
+        }
+
+        const distances = await Tours.aggregate([
+            {
+                $geoNear: {
+                    near: {
+                        type: 'Point',
+                        coordinates: [lng * 1, lat * 1]
+                    },
+                    distanceField: 'distance',
+                    distanceMultiplier: multiplier
+                }
+            },
+            {
+                $project: {
+                    distance: 1,
+                    name: 1
+                }
+            }
+        ]);
+
+        res.status(200).json({
+            status: 'Success',
+            data: {
+                data: distances
+            }
+        })
+
+    } catch (error) {
+        res.status(400).json({
+            status: 'fail',
+            message: error.message,
+        })
+    }
+}
+
+module.exports = { getAllTours, getTourByID, postTours, updateTourByID, deleteTourByID, getTourStats, getTourWithin, getDistances };
