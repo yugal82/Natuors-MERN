@@ -88,6 +88,9 @@ const tours = mongoose.Schema({
     toObject: { virtuals: true }
 });
 
+tours.index({ price: 1, ratingsAverage: -1 });
+tours.index({ startLocation: '2dsphere' });
+
 // virtual populate
 tours.virtual('reviews', {
     ref: 'reviews',
