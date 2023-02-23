@@ -1,23 +1,27 @@
 const dotenv = require('dotenv');
-dotenv.config({path : './config.env'});
+dotenv.config({ path: './config.env' });
 
+const path = require('path');
+const express = require('express');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 
-const express = require('express');
 const app = express();
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// serving static files
+app.use(express.static(path.join(__dirname, 'public')));
 
 const AppError = require('./utils/error');
 const errorHandler = require('./controllers/errorController');
 const tourRoutes = require('./routes/tours');
 const usersRoutes = require('./routes/users');
 const reviewRoutes = require('./routes/review');
-
-app.get('/', (req, res) => {
-    res.send('The natours server is live!');
-})
+const viewRoutes = require('./routes/viewRoutes');
 
 // 1) Middlewares
 // Set security HTTP headers.
@@ -26,7 +30,7 @@ app.use(helmet());
 // Middleware to set the rate of the API call
 const limiter = rateLimit({
     max: 100,
-    windowMs: 60*60*1000,
+    windowMs: 60 * 60 * 1000,
     message: 'Too many request from this IP, try again after an hour.'
 });
 app.use('/api', limiter)
@@ -40,22 +44,21 @@ app.use(mongoSanitize());
 // Data sanitization against XSS attacks
 app.use(xss());
 
-// serving static files
-app.use(express.static(`${__dirname}/public`));
 
 // Test middleware
 app.use((req, res, next) => {
     req.requestTime = new Date().toISOString();
     // console.log(req.requestTime)
-    
+
     // console.log(req.headers);
     next();
 })
 
 // 2) Routes
+app.use('/', viewRoutes);
 app.use(tourRoutes);
 app.use(usersRoutes);
-app.use('/api/v1/reviews',reviewRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
 
 // handling requests to routes that are not defined
 app.all('*', (req, res, next) => {
