@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 // const Users = require('./userModel');
 const Reviews = require('./reviewModel');
+const slugify = require('slugify');
 
 // to make a schema for a model in mongodb, mongoose provides us with mongoose.Schema() method which takes in a object to define a schema.
 const tours = mongoose.Schema({
@@ -10,6 +11,7 @@ const tours = mongoose.Schema({
         unique: true,
         trim: true
     },
+    slug: String,
     duration: {
         type: Number,
         required: true,
@@ -62,7 +64,7 @@ const tours = mongoose.Schema({
         address: String,
         description: String
     },
-    location: [
+    locations: [
         {
             type: {
                 type: String,
@@ -77,18 +79,19 @@ const tours = mongoose.Schema({
     ],
     // guides: Array  --> For embedding user documents
     guides: [
-        { 
+        {
             type: mongoose.Schema.ObjectId,
             ref: 'users'
         }
     ]
 },
-{
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
-});
+    {
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
+    });
 
 tours.index({ price: 1, ratingsAverage: -1 });
+tours.index({ slug: 1 });
 tours.index({ startLocation: '2dsphere' });
 
 // virtual populate
@@ -97,6 +100,11 @@ tours.virtual('reviews', {
     foreignField: 'tour',
     localField: '_id'
 })
+
+tours.pre('save', function (next) {
+    this.slug = slugify(this.name, { lower: true });
+    next();
+});
 
 //Document middleware i.e middleware in mongoose:
 // .pre() -> this runs BEFORE .save() or .create()
@@ -126,12 +134,12 @@ tours.virtual('reviews', {
 
 // this is a query middleware, which is used to populate the referenced documents in the tours collection.
 // i.e since we are referencing the users documents in guides field in the tours schema, we need to poulate it when quering i.e find(), findById(), findOne(), etc. 
-tours.pre(/^find/, async function(next) {
-    this.populate({ 
-        path: 'guides', 
-        select: '-__v -passwordChangedAt' 
+tours.pre(/^find/, async function (next) {
+    this.populate({
+        path: 'guides',
+        select: '-__v -passwordChangedAt'
     });
-    
+
     next();
 })
 
