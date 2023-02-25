@@ -1,13 +1,14 @@
 const express = require('express');
 
 const { getUsers, postUser, updateMe, deleteMe, getMe, getUser } = require('../controllers/usersController');
-const { signup, login, forgotPassword, resetPassword, updatePassword, protect } = require('../controllers/authController');
+const { signup, login, forgotPassword, resetPassword, updatePassword, protect, logout } = require('../controllers/authController');
 
 const router = express.Router();
 
 // route - 'localhost:8000/signup works perfectly fine to post(create) users. Although 'api/v1/users/signup' does not works. Check and debug.
 router.post('/signup', signup);
 router.post('/login', login);
+router.get('/logout', logout);
 router.post('/forgot-password', forgotPassword);
 router.patch('/reset-password/:token', resetPassword);
 

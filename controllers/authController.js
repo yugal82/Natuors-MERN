@@ -83,6 +83,16 @@ const login = async (req, res, next) => {
     }
 }
 
+const logout = (req, res, next) => {
+    res.cookie('jwt', 'loggedout', {
+        expiresIn: new Date(Date.now() + 10 * 1000),
+        httpOnly: true
+    });
+    res.status(200).json({
+        status: 'Success',
+    })
+}
+
 // this function is to check whether the user is logged in or not to perform certain operations.
 const protect = async (req, res, next) => {
     try {
@@ -90,6 +100,8 @@ const protect = async (req, res, next) => {
         // 1. Getting token and check if its there
         if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
             token = req.headers.authorization.split(' ')[1];
+        } else if (req.cookies.jwt) {
+            token = req.cookies.jwt;
         }
 
         if (!token) {
@@ -239,6 +251,32 @@ const updatePassword = async (req, res, next) => {
     }
 }
 
+const isLoggedIn = async (req, res, next) => {
+    try {
+        if (req.cookies.jwt) {
+            // 1. Verification of token
+            const decodedPayload = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET_KEY);
 
+            // 2. Check if user still exists
+            // i.e if the user has been deleted or the user has changed its password before the JWT token expires, in that case then it will still be authorized. To avoid this we make sure to check this step.
+            const userExists = await Users.findById(decodedPayload.id);
+            if (!userExists) {
+                return next();
+            }
 
-module.exports = { signup, login, protect, restrictTo, forgotPassword, resetPassword, updatePassword }
+            // 3. Check if user has changed password after the JWT token was issued.
+            if (userExists.changedPasswordAfter(decodedPayload.iat)) {
+                return next();
+            }
+
+            // only if all the checks are done, then only the next middleware in the stack will be called.
+            res.locals.user = userExists;
+            return next();
+        }
+        next();
+    } catch (error) {
+        return next();
+    }
+}
+
+module.exports = { signup, login, protect, restrictTo, forgotPassword, resetPassword, updatePassword, isLoggedIn, logout }
