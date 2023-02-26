@@ -125,6 +125,7 @@ const protect = async (req, res, next) => {
 
         // only if all the checks are done, then only the next middleware in the stack will be called.
         req.user = userExists;
+        res.locals.user = userExists
         next();
     } catch (error) {
         res.status(401).json({

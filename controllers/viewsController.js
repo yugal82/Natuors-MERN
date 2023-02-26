@@ -1,4 +1,5 @@
 const Tours = require('../models/toursModel');
+const AppError = require('../utils/error');
 
 const getAllTours = async (req, res, next) => {
     try {
@@ -23,6 +24,10 @@ const getTourBySlug = async (req, res) => {
         // 1. Get tour
         const tour = await Tours.findOne({ slug: req.params.slug }).populate({ path: 'reviews', fields: 'review rating author' })
 
+        if(!tour){
+            return next(new AppError('No tour with that name', 404));
+        }
+
         // 2. Build template
 
         // 3. Render
@@ -31,9 +36,10 @@ const getTourBySlug = async (req, res) => {
             tour
         })
     } catch (error) {
-        res.status(400).json({
-            message: 'Invalid route'
-        })
+        // res.status(400).json({
+        //     message: 'Invalid route'
+        // })
+        res.status(404).render('404');
     }
 }
 
@@ -49,4 +55,15 @@ const loginForm = async (req, res, next) => {
     }
 }
 
-module.exports = { getAllTours, getTourBySlug, loginForm }
+const getAccount = async(req, res, next) => {
+    try {
+        res.status(200).render('accounts', {
+            // user: req.user,
+            title: 'My Profile'
+        })
+    } catch (error) {
+        res.status(404).render('404');
+    }
+}
+
+module.exports = { getAllTours, getTourBySlug, loginForm, getAccount }
