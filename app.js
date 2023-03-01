@@ -23,6 +23,7 @@ const tourRoutes = require('./routes/tours');
 const usersRoutes = require('./routes/users');
 const reviewRoutes = require('./routes/review');
 const viewRoutes = require('./routes/viewRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
 // 1) Middlewares
 // Set security HTTP headers.
@@ -61,6 +62,7 @@ app.use('/', viewRoutes);
 app.use(tourRoutes);
 app.use(usersRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/booking', bookingRoutes);
 
 // handling requests to routes that are not defined
 app.all('*', (req, res, next) => {
