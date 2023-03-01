@@ -3,7 +3,7 @@ const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const Users = require('../models/userModel');
 const AppError = require('../utils/error');
-const sendEmail = require('../utils/email');
+const Email = require('../utils/email');
 
 const createToken = (id) => {
     return jwt.sign({ id: id }, process.env.JWT_SECRET_KEY, {
@@ -42,6 +42,9 @@ const signup = async (req, res, next) => {
         }
         const user = new Users(userBody);
         const createUser = await user.save();
+
+        const url = `${req.protocol}://${req.get('host')}/my-profile`;
+        await new Email(user, url).sendWelcome();
 
         // JWT -JsonWebToken is used for authentication and authorization of a user.
         // jwt.sign() creates a new token and assigns it to a user which has been created newly. Using this jwt token, the server verifies whether the user is authentic and authorized or not.
@@ -168,17 +171,11 @@ const forgotPassword = async (req, res, next) => {
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    // 3. Send it to user's email
-    const resetURL = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
-
-    const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
-
+    
     try {
-        await sendEmail({
-            email: user.email,
-            subject: 'Your password reset token (valid for 10 min)',
-            message
-        });
+        // 3. Send it to user's email
+        const resetURL = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
+        await new Email(user, resetURL).sendPasswordReset();
 
         res.status(200).json({
             status: 'success',
