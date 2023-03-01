@@ -1,5 +1,33 @@
+const sharp = require('sharp');
+const multer = require('multer');
 const Users = require('../models/userModel');
 const AppError = require('../utils/error');
+
+// const multerStorage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//         cb(null, 'public/img/users')
+//     },
+//     filename: (req, file, cb) => {
+//         const extension = file.mimetype.split('/')[1];
+//         cb(null, `user-${req.user._id}-${Date.now()}.${extension}`)
+//     }
+// });
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image')) {
+        cb(null, true);
+    } else {
+        cb(new AppError('Not an image. Please upload an image', 400), false);
+    }
+}
+const upload = multer({
+    storage: multerStorage,
+    fileFilter: multerFilter
+});
+
+const uploadMiddleware = upload.single('photo');
 
 const getUsers = async (req, res, next) => {
     try {
@@ -19,10 +47,10 @@ const getUsers = async (req, res, next) => {
     }
 }
 
-const getUser = async(req, res, next) => {
+const getUser = async (req, res, next) => {
     try {
         const user = await Users.findById(req.params.id);
-        if(!user){
+        if (!user) {
             next(new AppError('No user found. Please put in the correct ID', 404));
         }
 
@@ -63,6 +91,9 @@ const updateMe = async (req, res, next) => {
             name: req.body.name,
             email: req.body.email
         }
+        if (req.file) {
+            bodyObject.photo = req.file.filename
+        }
         const updatedUser = await Users.findByIdAndUpdate(req.user._id, bodyObject, { new: true, runValidators: true });
 
         res.status(200).json({
@@ -79,6 +110,15 @@ const updateMe = async (req, res, next) => {
             error: error
         })
     }
+}
+
+const resizeUserPhoto = async (req, res, next) => {
+    if (!req.file) return next();
+
+    req.file.filename = `user-${req.user._id}-${Date.now()}.jpeg`
+    await sharp(req.file.buffer).resize(500, 500).toFormat('jpeg').jpeg({ quality: 90 }).toFile(`public/img/users/${req.file.filename}`);
+
+    next();
 }
 
 const deleteMe = async (req, res, next) => {
@@ -111,4 +151,4 @@ const getMe = (req, res, next) => {
     }
 }
 
-module.exports = { getUsers, postUser, updateMe, deleteMe, getMe, getUser };
+module.exports = { getUsers, postUser, updateMe, deleteMe, getMe, getUser, uploadMiddleware, resizeUserPhoto };
