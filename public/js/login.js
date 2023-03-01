@@ -57,13 +57,9 @@ if (logoutBtn) {
 
 
 // to update the user's data
-const updateUserData = async (name, email) => {
+const updateUserData = async (form) => {
     try {
-        const body = {
-            name,
-            email
-        }
-        const res = await axios.patch('http://localhost:8000/api/v1/users/update', body);
+        const res = await axios.patch('http://localhost:8000/api/v1/users/update', form);
 
         if (res.data.status == 'Success') {
             alert('Data updated successfully!');
@@ -78,10 +74,11 @@ if (updateUserForm) {
     updateUserForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-
-        updateUserData(name, email);
+        const form = new FormData();
+        form.append('name', document.getElementById('name').value);
+        form.append('email', document.getElementById('email').value);
+        form.append('photo', document.getElementById('photo').files[0]);
+        updateUserData(form);
     });
 }
 
