@@ -4,7 +4,7 @@ const login = async (email, password) => {
     try {
         const res = await axios({
             method: 'POST',
-            url: 'http://localhost:8000/login',
+            url: '/login',
             data: {
                 email,
                 password
@@ -39,9 +39,8 @@ const logout = async () => {
     try {
         const res = await axios({
             method: 'GET',
-            url: 'http://localhost:8000/logout'
+            url: '/logout'
         });
-        console.log(res);
         if (res.data.status == 'Success') {
             location.reload(true);
         }
@@ -50,7 +49,7 @@ const logout = async () => {
     }
 }
 
-const logoutBtn = document.querySelector('.nav__el--logout');
+logoutBtn = document.querySelector('.nav__el--logout');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
 }
@@ -59,7 +58,7 @@ if (logoutBtn) {
 // to update the user's data
 const updateUserData = async (form) => {
     try {
-        const res = await axios.patch('http://localhost:8000/api/v1/users/update', form);
+        const res = await axios.patch('/api/v1/users/update', form);
 
         if (res.data.status == 'Success') {
             alert('Data updated successfully!');
@@ -90,7 +89,7 @@ const updatePassword = async (passwordCurrent, password, confirmPassword) => {
             password,
             confirmPassword
         }
-        const res = await axios.patch('http://localhost:8000/update-password', body);
+        const res = await axios.patch('/update-password', body);
         if (res.data.status == 'Success') {
             alert('Password updated successfully!');
         }

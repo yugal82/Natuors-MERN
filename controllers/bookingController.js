@@ -64,4 +64,51 @@ const createBookingCheckout = async (req, res, next) => {
     }
 }
 
-module.exports = { getCheckoutSession, createBookingCheckout }
+const getAllBookings = async (req, res, next) => {
+    try {
+        const bookings = await Booking.find();
+
+        if (!bookings) {
+            return next(new AppError('No bookings', 404));
+        }
+
+        res.status(200).json({
+            status: 'Success',
+            data: {
+                bookings
+            }
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            status: 'Fail',
+            error: error,
+            message: error.message
+        })
+    }
+}
+
+const getBooking = async (req, res, next) => {
+    try {
+        const booking = await Booking.findById(req.params.bookingID);
+
+        if (!booking) {
+            return next(new AppError('No bookings', 404));
+        }
+        res.status(200).json({
+            status: 'Success',
+            data: {
+                booking
+            }
+        });
+
+    } catch (error) {
+        res.status(400).json({
+            status: 'Fail',
+            error: error,
+            message: error.message
+        })
+    }
+}
+
+module.exports = { getCheckoutSession, createBookingCheckout, getAllBookings, getBooking }

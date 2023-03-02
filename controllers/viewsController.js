@@ -1,3 +1,4 @@
+const Booking = require('../models/bookingsModel');
 const Tours = require('../models/toursModel');
 const AppError = require('../utils/error');
 
@@ -24,7 +25,7 @@ const getTourBySlug = async (req, res) => {
         // 1. Get tour
         const tour = await Tours.findOne({ slug: req.params.slug }).populate({ path: 'reviews', fields: 'review rating author' })
 
-        if(!tour){
+        if (!tour) {
             return next(new AppError('No tour with that name', 404));
         }
 
@@ -55,7 +56,7 @@ const loginForm = async (req, res, next) => {
     }
 }
 
-const getAccount = async(req, res, next) => {
+const getAccount = async (req, res, next) => {
     try {
         res.status(200).render('accounts', {
             // user: req.user,
@@ -66,4 +67,26 @@ const getAccount = async(req, res, next) => {
     }
 }
 
-module.exports = { getAllTours, getTourBySlug, loginForm, getAccount }
+const getMyTours = async (req, res, next) => {
+    try {
+        // 1. Find all bookings
+        const bookings = await Booking.find({ user: req.user.id });
+
+        // 2. Find tours with the referenced ID
+        const tourIDs = bookings.map(el => el.tour);
+        const tours = await Tours.find({ _id: { $in: tourIDs } });
+
+        if (!tours) {
+            return res.status(404).render('You have no bookings. Book one to see here!');  
+        }
+
+        res.status(200).render('overview', {
+            title: 'My Bookings',
+            tours: tours
+        })
+    } catch (error) {
+        res.status().render('404');
+    }
+}
+
+module.exports = { getAllTours, getTourBySlug, loginForm, getAccount, getMyTours }
