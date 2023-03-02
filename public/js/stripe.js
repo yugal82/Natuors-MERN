@@ -3,7 +3,7 @@ const stripe = Stripe('pk_test_51Mgw9KIUA8Ig4zfgFpwxPuaIFaSUg6ddoIDceedj9CopVukh
 const bookTour = async (tourId) => {
     try {
         // 1. Get checkout-session from backend API
-        const session = await axios.get(`http://localhost:8000/api/v1/booking/checkout-session/${tourId}`);
+        const session = await axios.get(`/api/v1/booking/checkout-session/${tourId}`);
     
         // 2. Use Stirpe object to create checkout form + charge credit card
         await stripe.redirectToCheckout({
@@ -19,7 +19,6 @@ const bookTour = async (tourId) => {
 const bookBtn = document.getElementById('book-tour')
 if (bookBtn) {
     bookBtn.addEventListener('click', (e) => {
-        console.log('clicked!');
         e.target.textContent = 'Proccessing...'
         const tourId = e.target.dataset.tourId;
 
