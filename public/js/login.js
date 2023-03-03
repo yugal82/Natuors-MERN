@@ -34,6 +34,50 @@ if (form) {
     });
 }
 
+// to signin users
+const signin = async (name, email, password, confirmPassword) => {
+    try {
+        if (password !== confirmPassword) {
+            return alert('Password and confirm password should match')
+        }
+        const res = await axios({
+            method: 'POST',
+            url: '/signup',
+            data: {
+                name,
+                email,
+                password,
+                confirmPassword
+            }
+        });
+        if(res.data.status == 'Success'){
+            alert('Signed in successfully!');
+            window.setTimeout(() => {
+                location.assign('/');
+            }, 1500);
+        }
+    } catch (error) {
+        alert('Something went wrong. Try again.')
+    }
+}
+
+const signinForm = document.querySelector('.form--signin');
+if (signinForm) {
+    signinForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        signin(name, email, password, confirmPassword);
+
+        document.getElementById('password').value = '';
+        document.getElementById('confirmPassword').value = '';
+    });
+}
+
 // to logout the user
 const logout = async () => {
     try {
@@ -49,7 +93,7 @@ const logout = async () => {
     }
 }
 
-logoutBtn = document.querySelector('.nav__el--logout');
+const logoutBtn = document.querySelector('.nav__el--logout');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
 }

@@ -56,6 +56,18 @@ const loginForm = async (req, res, next) => {
     }
 }
 
+const signupForm = async (req, res, next) => {
+    try {
+        res.status(200).render('signup', {
+            title: 'Sign Up'
+        });
+    } catch (error) {
+        res.status(400).json({
+            message: 'Invalid route'
+        })
+    }
+}
+
 const getAccount = async (req, res, next) => {
     try {
         res.status(200).render('accounts', {
@@ -77,7 +89,7 @@ const getMyTours = async (req, res, next) => {
         const tours = await Tours.find({ _id: { $in: tourIDs } });
 
         if (!tours) {
-            return res.status(404).render('You have no bookings. Book one to see here!');  
+            return res.status(404).render('You have no bookings. Book one to see here!');
         }
 
         res.status(200).render('overview', {
@@ -89,4 +101,4 @@ const getMyTours = async (req, res, next) => {
     }
 }
 
-module.exports = { getAllTours, getTourBySlug, loginForm, getAccount, getMyTours }
+module.exports = { getAllTours, getTourBySlug, loginForm, getAccount, getMyTours, signupForm }
